@@ -1,0 +1,141 @@
+[
+{
+	"uri": "/2-prerequiste/2.1-createec2/",
+	"title": "Cấu hình môi trường CLI (AWS CLI &amp; Terraform)",
+	"tags": [],
+	"description": "",
+	"content": "Mục tiêu Cài đặt AWS CLI v2 trên Windows Cài đặt Terraform ≥ v1.5 trên Windows Kiểm tra kết nối AWS 1. Cài đặt AWS CLI v2 (Windows) a) Trên máy tính (CLI):\nTải bộ cài tại: https://awscli.amazonaws.com/AWSCLIV2.msi Chạy file .msi và cài đặt như phần mềm thông thường. Sau khi cài đặt, mở Command Prompt hoặc PowerShell và kiểm tra: aws --version b) Trên web console:\nAWS Console không cần cài CLI. Tuy nhiên, khi cần thao tác nhanh, bạn có thể dùng AWS CloudShell trực tiếp trên giao diện web (icon terminal góc trên bên phải Console) để chạy các lệnh AWS CLI mà không cần cài đặt gì thêm. 2. Cấu hình AWS CLI 2.1) Trên web console: Vào IAM \u0026gt; Users, chọn user của bạn , nếu chưa thì tạo mới.\nNhập tên như bình thường , sau đó chọn quyền hạn như sau.\nNext tiếp, sau đó chọn user vừa tạo. Chọn Security credentials \u0026gt; Create access key để tạo Access Key phục vụ aws configure.\nChọn CLI.\nTạo thành công như hình, ta copy 2 key như trên màn hình lại.\n2.2) Trên máy tính (CLI): Điền Access Key, Secret Key, Region và output format.\nMở PowerShell.\naws configure Sau đó điền lần lượt 2 key bạn vừa tạo vào như sau(tham khảo): Với Region bạn tự quyết định nhé !\n3. Cài đặt Terraform ≥ v1.5 Tải từ: https://developer.hashicorp.com/terraform/downloads Giải nén và thêm vào hệ thống PATH\nSau khi tải xong ta tìm View advanced system settings Follow cac bước sau để add PATH Kiểm tra:\nterraform -version 4. Kiểm tra kết nối AWS a) CLI:\naws sts get-caller-identity Nếu trả về thông tin account/user là đã cấu hình thành công.\nb) Console:\nĐăng nhập vào AWS Console, kiểm tra góc phải hiển thị đúng account và region.\n"
+},
+{
+	"uri": "/4-s3log/4.1-updateiamrole/",
+	"title": "Kiểm thử với artifact chứa dependency lỗi",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn kiểm tra khả năng phát hiện và chặn artifact có chứa dependency lỗ hổng bảo mật trong pipeline.\nMục tiêu Tạo hoặc sử dụng dự án mẫu có dependency dính CVE đã biết Chạy pipeline để xác nhận công cụ quét bảo mật hoạt động Đảm bảo artifact bị reject và cảnh báo được gửi 1. Chuẩn bị dự án có dependency lỗi Chọn ngôn ngữ bạn đang sử dụng (npm, Maven, Python\u0026hellip;). Thêm dependency có CVE đã biết vào file cấu hình: npm: Thêm phiên bản cũ của thư viện lodash vào package.json. Maven: Thêm thư viện commons-collections phiên bản cũ vào pom.xml. Python: Thêm flask==0.5 vào requirements.txt. Ví dụ với npm:\nnpm install lodash@4.17.4 --save 2. Commit \u0026amp; Push thay đổi git add . git commit -m \u0026#34;testing\u0026#34; git push origin main 3. Quan sát pipeline GitHub Actions Mở tab Actions trong repository.\nChọn workflow vừa chạy.\nKiểm tra bước Snyk scan hoặc ECR scan:\n-Nếu phát hiện CVE mức High/Critical → job sẽ fail.\n-EventBridge/SNS sẽ gửi cảnh báo (nếu cấu hình ở chương 3.2).\n4. Xác minh kết quả Artifact sẽ không được publish lên CodeArtifact/ECR.\nEmail cảnh báo từ SNS (hoặc Slack) được gửi thành công.\n"
+},
+{
+	"uri": "/",
+	"title": "Secure Artifact Management with AWS CodeArtifact",
+	"tags": [],
+	"description": "",
+	"content": "Secure Artifact Management with AWS CodeArtifact Overall Trong workshop này, bạn sẽ học cách triển khai hệ thống quản lý artifact an toàn với AWS CodeArtifact và tích hợp quy trình quét bảo mật tự động.\nQuy trình thực hành bao gồm: khởi tạo hạ tầng, cấu hình CI/CD pipeline, bật logging \u0026amp; alerting, kiểm thử và dọn dẹp tài nguyên.\nContent Giới thiệu Các bước chuẩn bị Logging, Alerting \u0026amp; Compliance Testing \u0026amp; Demo Cleanup "
+},
+{
+	"uri": "/3-accessibilitytoinstances/3.1-public-instance/",
+	"title": "Tạo CloudWatch Log Group &amp; Metric Filter",
+	"tags": [],
+	"description": "",
+	"content": "Mục tiêu Tạo CloudWatch Log Group để lưu log Liên kết log từ CodeArtifact/ECR vào CloudWatch Tạo Metric Filter để phát hiện lỗi hoặc sự kiện quan trọng 1. Tạo Log Group Đăng nhập AWS Console → vào CloudWatch. Chọn Logs → Log groups → Create log group. Nhập tên, ví dụ: /secure-artifact/pipeline. Chọn Retention (ví dụ: 30 ngày). Bấm Create. 2. Kết nối log từ dịch vụ CodeArtifact: Vào CodeArtifact → Settings → Enable CloudWatch logs (nếu hỗ trợ). ECR: Mặc định Enhanced Scanning gửi kết quả vào EventBridge, bạn có thể tạo rule gửi log vào CloudWatch. GitHub Actions: Có thể cấu hình pipeline gửi log ra CloudWatch qua AWS CLI hoặc Lambda tùy chọn. 3. Tạo Metric Filter Trong Log group vừa tạo, chọn Create metric filter. Chọn log stream và nhập Filter pattern, ví dụ: ?ERROR ?Exception Đặt tên metric, ví dụ: PipelineErrorCount.\nChọn namespace, ví dụ: SecureArtifact.\nBấm Create filter.\n4. Xác minh Gây thử một lỗi trong pipeline để log được ghi.\nKiểm tra metric filter đã nhận sự kiện.\n"
+},
+{
+	"uri": "/1-introduce/",
+	"title": "Giới thiệu",
+	"tags": [],
+	"description": "",
+	"content": "Triển khai hệ thống quản lý artifact an toàn với AWS CodeArtifact và quét bảo mật tự động là một workshop thực hành giúp bạn xây dựng quy trình DevSecOps hoàn chỉnh — từ khâu build, scan bảo mật, quản lý truy cập, đến giám sát compliance.\nWorkshop tập trung vào:\nQuản lý artifact (npm, Maven, Docker\u0026hellip;) tập trung, an toàn. Tự động quét lỗ hổng bảo mật trước khi artifact được phát hành. Ghi log, cảnh báo và lưu trữ bằng AWS CloudWatch \u0026amp; CloudTrail. Mã hóa artifact và log bằng AWS KMS. Thiết lập quyền truy cập chi tiết theo nguyên tắc least privilege với IAM. 2. Kiến trúc tổng quan Giải pháp được xây dựng theo kiến trúc cloud-native, tích hợp nhiều dịch vụ AWS:\nAWS CodeArtifact: Lưu trữ artifact với versioning và kiểm soát truy cập. Amazon ECR (Enhanced Scanning): Quét bảo mật container image. Snyk: Quét dependency và phát hiện CVE cho npm, Maven, Python\u0026hellip; Amazon CodeGuru Reviewer: Phân tích code tự động, phát hiện lỗ hổng và best practice violations. AWS IAM \u0026amp; AWS KMS: Quản lý quyền truy cập, mã hóa dữ liệu. CloudWatch Logs \u0026amp; Metrics, CloudTrail: Giám sát và lưu lại mọi hoạt động. SNS / EventBridge: Gửi cảnh báo tự động khi phát hiện sự cố. Luồng hoạt động chính:\nDeveloper push code lên GitHub → GitHub Actions khởi động pipeline. Pipeline build → chạy quét bảo mật (Snyk, CodeGuru, ECR). Artifact pass kiểm tra → upload lên CodeArtifact / ECR; fail → gửi cảnh báo và ghi log. CloudWatch \u0026amp; CloudTrail ghi lại toàn bộ quá trình, Audit Manager thu thập evidence phục vụ compliance. "
+},
+{
+	"uri": "/2-prerequiste/",
+	"title": "Các bước chuẩn bị",
+	"tags": [],
+	"description": "",
+	"content": "\rChuẩn bị sẵn AWS Account có quyền tạo tài nguyên (IAM, CodeArtifact, KMS, ECR, CloudWatch\u0026hellip;) và một GitHub Repository để triển khai pipeline CI/CD.\nĐể nắm vững kiến thức cơ bản về các dịch vụ AWS trước khi thực hành, bạn có thể tham khảo:\nGiới thiệu AWS CodeArtifact Giới thiệu Amazon ECR Hướng dẫn GitHub Actions Trong phần chuẩn bị này, chúng ta sẽ cấu hình môi trường làm việc, bao gồm:\nTạo VPC và EC2 instance (tùy chọn, nếu muốn test kết nối private). Cài đặt công cụ CLI cần thiết trên máy local hoặc CI/CD runner. Tạo IAM Role và Policy để cấp quyền cho pipeline publish artifact và chạy quét bảo mật. Tạo KMS Key để mã hóa artifact và log. Nội dung chuẩn bị Cấu hình AWS CLI \u0026amp; Terraform Tạo IAM Role \u0026amp; Policy cho CI/CD Khởi tạo CodeArtifact Domain \u0026amp; Repository Cài đặt Snyk CLI và cấu hình GitHub Secrets "
+},
+{
+	"uri": "/4-s3log/4.2-creates3bucket/",
+	"title": "Chạy full pipeline",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn kiểm tra toàn bộ quy trình pipeline từ khâu build, quét bảo mật cho đến approve hoặc reject artifact.\nMục tiêu Chạy pipeline với artifact an toàn Xác nhận quá trình quét bảo mật Artifact được publish thành công khi pass kiểm tra 1. Chuẩn bị artifact an toàn Đảm bảo dự án không chứa dependency có CVE mức High/Critical. Cập nhật các thư viện lên phiên bản mới nhất: npm update Kiểm tra thủ công bằng Snyk CLI (tùy chọn): snyk test --severity-threshold=high 2. Commit \u0026amp; Push code git add . git commit -m \u0026#34;Safe build for full pipeline test\u0026#34; git push origin main 3. Theo dõi pipeline GitHub Actions Mở tab Actions trên repository.\nChọn workflow mới chạy.\nQuan sát các bước:\nBuild: cài đặt dependencies, compile code.\nSecurity Scan: chạy Snyk hoặc ECR scan (nếu có container).\nPublish: artifact được publish lên CodeArtifact/ECR.\nApprove: đánh dấu artifact “Approved” (nếu có bước review thủ công).\n4. Xác minh kết quả Artifact xuất hiện trong CodeArtifact/ECR với tag hoặc version mới.\nKhông có cảnh báo từ SNS/EventBridge.\nLog pipeline hiển thị tất cả bước pass thành công.\n"
+},
+{
+	"uri": "/3-accessibilitytoinstances/3.2-public-instance/",
+	"title": "Tạo cảnh báo với SNS &amp; EventBridge",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn cấu hình cảnh báo tự động khi pipeline hoặc quá trình quét bảo mật phát hiện lỗi nghiêm trọng (High/Critical CVE) hoặc thất bại.\nMục tiêu Tạo SNS Topic để gửi thông báo qua email Tạo EventBridge Rule bắt sự kiện từ CloudWatch Metric hoặc ECR Enhanced Scanning Kết nối EventBridge với SNS 1. Tạo SNS Topic và đăng ký email Đăng nhập AWS Console → vào SNS. Chọn Topics → Create topic. Loại topic: Standard. Tên: secure-artifact-alert. Bấm Create topic. Trong topic vừa tạo, chọn Create subscription: Protocol: Email Endpoint: nhập địa chỉ email nhận thông báo. Xác nhận email từ AWS (AWS sẽ gửi một email để confirm). 2. Tạo EventBridge Rule Vào EventBridge → Rules → Create rule. Tên: pipeline-failure-alert. Event source: chọn AWS events or EventBridge events. Pattern: Option 1 (CloudWatch Alarm): Chọn source từ aws.cloudwatch khi metric filter trong 3.1 \u0026gt; 0. Option 2 (ECR Scan Findings): Chọn source từ aws.ecr với detail chứa \u0026quot;severity\u0026quot;: [\u0026quot;HIGH\u0026quot;,\u0026quot;CRITICAL\u0026quot;]. Bấm Next. 3. Thêm Target là SNS Trong Select targets, chọn SNS topic. Chọn topic secure-artifact-alert. Bấm Next → Create rule. 4. Kiểm tra Tạo một lỗi giả trong pipeline hoặc push Docker image có lỗ hổng High/Critical. Kiểm tra email nhận cảnh báo từ SNS. "
+},
+{
+	"uri": "/2-prerequiste/2.2-createiamrole/",
+	"title": "Tạo IAM Role &amp; Policy cho CI/CD",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp tạo IAM Role trên AWS Console để GitHub Actions có quyền truy cập và thao tác với CodeArtifact, ECR, KMS và các dịch vụ liên quan trong pipeline CI/CD.\nMục tiêu Tạo IAM Role cho GitHub Actions (OIDC) Gán quyền truy cập cần thiết theo nguyên tắc least privilege Lưu ARN để dùng trong GitHub Secrets 1 Tạo OIDC provider cho GitHub (bắt buộc) IAM → Identity providers → Add provider → OpenID Connect (OIDC) Provider URL: https://token.actions.githubusercontent.com Audience: sts.amazonaws.com Create 2 Tạo IAM Role (Web identity) IAM → Roles → Create role → Web identity Identity provider: token.actions.githubusercontent.com\nAudience: sts.amazonaws.com\nNext → gán các policy cần thiết (CodeArtifact, ECR, KMS, CloudWatch, SNS…) theo nguyên tắc least privilege\n3. Gán quyền (Policies) Ở bước Add permissions, gán các policy sau:\nAWSCodeArtifactAdminAccess AmazonEC2ContainerRegistryFullAccess (nếu dùng Docker image push lên ECR) AWSKeyManagementServicePowerUser (quản lý mã hóa KMS) CloudWatchFullAccess (ghi log, metric) AmazonSNSFullAccess (gửi cảnh báo) Bạn có thể tạo Custom Policy nếu muốn giới hạn quyền cụ thể.\nBấm Next.\n4. Đặt tên \u0026amp; tạo Role Review thông tin → Create role. 5. Lưu ARN Role Sau khi tạo xong, mở Role vừa tạo và sao chép Role ARN.\nRole ARN này sẽ dùng để cấu hình trong GitHub Secrets ở bước sau.\n"
+},
+{
+	"uri": "/2-prerequiste/2.3-createiamrole/",
+	"title": "Khởi tạo CodeArtifact Domain &amp; Repository",
+	"tags": [],
+	"description": "",
+	"content": "Mục tiêu Tạo CodeArtifact Domain Tạo Repository cho từng môi trường (dev/test/prod) Lưu thông tin repository để dùng trong pipeline CI/CD 1. Tạo Repository Trong CodeArtifact, chọn tab Repositories → Create repository. Nhập tên repository, ví dụ: secure-repo-dev. Ở mục Domain, chọn domain (Tuỳ chọn) Chọn Upstream repositories nếu muốn kết nối với public registry (npm, Maven, PyPI\u0026hellip;). Bấm Create repository. Lặp lại bước này để tạo các repository cho môi trường test và prod nếu cần.\n2. Lưu thông tin kết nối Sau khi tạo repository:\nTrong repository (secure-artifact) → bấm nút View connection instructions. AWS sẽ mở một pop-up hoặc trang mới hiển thị các thông tin kết nối: "
+},
+{
+	"uri": "/4-s3log/4.3-creategwes3/",
+	"title": "Load test pipeline (parallel scan)",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn kiểm tra khả năng chịu tải của pipeline khi thực hiện nhiều tác vụ quét bảo mật song song.\nMục tiêu Tạo nhiều job quét bảo mật chạy song song Đánh giá hiệu năng và thời gian xử lý Xác định giới hạn tài nguyên của pipeline 1. Chuẩn bị workflow hỗ trợ parallel scan Mở file .github/workflows/ci.yml và chỉnh sửa phần jobs để chạy nhiều luồng quét song song:\njobs: scan: runs-on: ubuntu-latest strategy: matrix: service: [service-a, service-b, service-c] steps: - name: Checkout code uses: actions/checkout@v3 - name: Configure AWS credentials uses: aws-actions/configure-aws-credentials@v4 with: role-to-assume: ${{ secrets.AWS_ROLE_ARN }} aws-region: ap-southeast-1 - name: Run Snyk scan run: snyk test --file=${{ matrix.service }}/package.json --severity-threshold=high env: SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} 2. Commit \u0026amp; Push thay đổi git add .github/workflows/ci.yml git commit -m \u0026#34;Enable parallel scanning\u0026#34; git push origin main 3. Theo dõi hiệu suất Mở tab Actions để xem các job chạy song song.\nGhi nhận thời gian hoàn thành pipeline so với khi chạy tuần tự.\nTheo dõi log để đảm bảo không có job nào bị timeout.\n4. Đánh giá kết quả Nếu thời gian giảm đáng kể và không phát sinh lỗi → cấu hình parallel scan đạt yêu cầu.\nNếu gặp lỗi quá tải (rate limit AWS API hoặc Snyk) → điều chỉnh số luồng trong matrix.\n"
+},
+{
+	"uri": "/3-accessibilitytoinstances/3.3-public-instance/",
+	"title": "Thiết lập Audit Manager &amp; CloudTrail",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn bật CloudTrail để ghi lại toàn bộ hoạt động trên tài khoản AWS và cấu hình Audit Manager để thu thập log phục vụ kiểm tra bảo mật và tuân thủ.\nMục tiêu Bật và cấu hình AWS CloudTrail Tạo trail ghi log vào S3 và CloudWatch Kích hoạt Audit Manager để thu thập log tự động 1. Bật CloudTrail Đăng nhập AWS Console → vào CloudTrail. Chọn Create trail. Nhập tên, ví dụ: secure-artifact-trail. Chọn Apply trail to all regions để ghi log trên toàn bộ khu vực. Ở Storage location, tạo mới hoặc chọn S3 bucket hiện có. (Tuỳ chọn) Bật CloudWatch Logs để gửi log song song vào CloudWatch. Bấm Create trail. 2. Kiểm tra CloudTrail hoạt động Thực hiện một hành động trên AWS Console (ví dụ: xem thông tin repository CodeArtifact). Vào CloudTrail → Event history → tìm sự kiện vừa tạo để xác nhận. 3. Bật AWS Audit Manager Vào dịch vụ Audit Manager. Bấm Get started nếu là lần đầu sử dụng. Chọn Create assessment: Name: secure-artifact-audit S3 bucket lưu evidence: tạo mới hoặc chọn bucket hiện có. Chọn các dịch vụ cần giám sát (CodeArtifact, ECR, IAM, CloudWatch\u0026hellip;). Hoàn tất để Audit Manager bắt đầu thu thập log và evidence. 4. Kiểm tra dữ liệu Audit Mở assessment vừa tạo, vào tab Evidence để xem log và sự kiện đã thu thập từ CloudTrail. "
+},
+{
+	"uri": "/3-accessibilitytoinstances/",
+	"title": "Tích hợp CI/CD + Scanning",
+	"tags": [],
+	"description": "",
+	"content": "\rChúng ta tích hợp pipeline CI/CD sử dụng GitHub Actions để tự động build, quét bảo mật và publish artifact lên AWS CodeArtifact/ECR.\nCác công cụ bảo mật như Snyk và ECR Enhanced Scanning sẽ được áp dụng để phát hiện lỗ hổng trước khi artifact được phát hành.\nTrong phần này, chúng ta sẽ:\nTạo workflow GitHub Actions kết nối với AWS. Cấu hình bước build, quét bảo mật với Snyk. Tích hợp quét container image bằng ECR Enhanced Scanning. Tự động publish artifact khi pass kiểm tra. Nội dung thực hành Tạo GitHub Actions Workflow cơ bản Tích hợp quét container với ECR Enhanced Scanning Kiểm tra và xác nhận pipeline hoạt động "
+},
+{
+	"uri": "/2-prerequiste/2.4-createiamrole/",
+	"title": "Cài đặt công cụ quét Snyk &amp; thiết lập GitHub Secrets",
+	"tags": [],
+	"description": "",
+	"content": "Mục tiêu Cài đặt Snyk CLI trên Windows Lấy Snyk Token Thêm các thông tin AWS \u0026amp; Snyk vào GitHub Secrets 1. Cài đặt Snyk CLI (Windows) Mở PowerShell hoặc Command Prompt. Cài đặt Snyk CLI qua npm (Node.js): npm install -g snyk Kiểm tra phiên bản: snyk --version 2. Lấy Snyk Token Đăng ký hoặc đăng nhập tại: https://snyk.io\nTruy cập Account settings.\nSao chép Auth token của bạn.\n3. Cấu hình GitHub Secrets Mở GitHub Repository của dự án.\nVào Settings → Secrets and variables → Actions. Thêm các secrets sau:\nAWS_ACCESS_KEY_ID = Access key của IAM user/role\nAWS_SECRET_ACCESS_KEY = Secret key của IAM user/role\nAWS_ROLE_ARN = ARN của IAM Role (nếu dùng OIDC)\nCODEARTIFACT_REPO_URL = Chuỗi lấy được ở bước cuối mục 2.3\nSNYK_TOKEN = Token lấy ở bước 2\n4. Xác thực Snyk CLI (tuỳ chọn) Bạn có thể xác thực Snyk CLI trên máy local để test:\nsnyk auth \u0026lt;SNYK_TOKEN\u0026gt; "
+},
+{
+	"uri": "/4-s3log/4.4-configsessionlogs/",
+	"title": "Failover test (simulate outage)",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn mô phỏng sự cố dịch vụ (CodeArtifact hoặc ECR) để kiểm tra cơ chế failover và khả năng phục hồi của pipeline.\nMục tiêu Mô phỏng tình huống dịch vụ artifact bị gián đoạn Đánh giá thời gian phát hiện và phục hồi Kiểm tra các bước fallback đã cấu hình 1. Mô phỏng sự cố CodeArtifact/ECR Cách 1 – Thay đổi tạm thời endpoint Vào file cấu hình pipeline, thay đổi CODEARTIFACT_REPO_URL hoặc endpoint ECR thành giá trị sai. Điều này sẽ làm bước publish artifact thất bại. Cách 2 – Tạm thời vô hiệu hóa quyền truy cập Vào IAM Console, edit role của GitHub Actions và remove quyền publish/download. Lưu thay đổi để pipeline mất quyền truy cập. 2. Chạy pipeline Commit và push thay đổi nhỏ để kích hoạt workflow. Quan sát pipeline fail ở bước publish. 3. Xác minh cơ chế fallback Nếu đã cấu hình multi-region hoặc repository dự phòng, kiểm tra pipeline tự động chuyển sang endpoint khác. Nếu có script retry, xác minh số lần retry và thời gian chờ. 4. Khôi phục cấu hình Trả lại endpoint và quyền truy cập ban đầu. Chạy lại pipeline để đảm bảo hoạt động bình thường. "
+},
+{
+	"uri": "/4-s3log/",
+	"title": "Testing &amp; Demo",
+	"tags": [],
+	"description": "",
+	"content": "\rChúng ta kiểm thử toàn bộ pipeline đã xây dựng, bao gồm các tình huống thành công và thất bại\nTrong phần này, chúng ta sẽ:\nKiểm thử với artifact chứa dependency lỗi. Chạy full pipeline để xác nhận quy trình build → scan → approve/reject. Thực hiện load test để đánh giá hiệu năng pipeline. Mô phỏng sự cố để kiểm tra cơ chế failover. Xuất báo cáo kết quả thực hành. Nội dung thực hành Kiểm thử với artifact chứa dependency lỗi Chạy full pipeline: build → scan → approve/reject Load test pipeline (parallel scan) Failover test (simulate outage) Xuất báo cáo workshop "
+},
+{
+	"uri": "/4-s3log/4.5-configsessionlogs/",
+	"title": "4.5 – Xuất báo cáo",
+	"tags": [],
+	"description": "",
+	"content": "\rBước này giúp bạn tổng hợp kết quả thực hành, bao gồm log pipeline, kết quả quét bảo mật và các cảnh báo, nhằm tạo báo cáo hoàn chỉnh cho workshop.\nMục tiêu Thu thập log và kết quả từ GitHub Actions Lưu trữ báo cáo quét bảo mật từ Snyk và ECR Tổng hợp thành báo cáo cuối cùng 1. Thu thập log pipeline Mở repository trên GitHub. Vào tab Actions → chọn workflow cần xuất báo cáo. Bấm Download logs để tải toàn bộ log chạy pipeline. 2. Lưu kết quả quét bảo mật Snyk: Trong bước scan của pipeline, lưu output dưới dạng file JSON hoặc HTML (sử dụng --json hoặc --json-file-output). snyk test --severity-threshold=high --json-file-output=report.json ECR Enhanced Scanning: Vào AWS Console → ECR → chọn image → Scan results → Export kết quả (copy/paste hoặc screenshot).\n3. Ghi nhận cảnh báo Mở email hoặc Slack để lấy nội dung cảnh báo từ SNS/EventBridge (nếu có).\nLưu lại thông tin về thời gian, loại sự kiện, mức độ.\n4. Tổng hợp báo cáo Tạo file workshop-report.md hoặc workshop-report.pdf với nội dung:\nMô tả hạ tầng và pipeline đã triển khai.\nKết quả quét bảo mật (pass/fail).\nCác cảnh báo và xử lý.\nBài học rút ra và đề xuất cải tiến.\n5. Lưu trữ và chia sẻ Lưu báo cáo trong repository (thư mục reports/) hoặc trên S3.\n"
+},
+{
+	"uri": "/5-portfwd/",
+	"title": "Cleanup",
+	"tags": [],
+	"description": "",
+	"content": "\rChúng ta dọn dẹp toàn bộ tài nguyên AWS và GitHub đã tạo trong quá trình workshop để tránh phát sinh chi phí và giữ môi trường làm việc gọn gàng.\nTrong phần này, chúng ta sẽ:\nXoá CodeArtifact, ECR, KMS, IAM, CloudWatch, SNS, EventBridge, CloudTrail và Audit Manager. Xoá các secrets và workflow GitHub liên quan đến workshop. 1. Xoá CodeArtifact Domain \u0026amp; Repository Vào AWS Console → CodeArtifact → Repositories. Chọn repository (dev/test/prod) → Delete. Sau khi xoá hết repository, vào Domains → xoá domain. 2. Xoá ECR Repository (nếu có) Vào ECR → chọn repository. Chọn Delete để xoá tất cả image và repo. 3. Xoá KMS Key Vào KMS → Customer managed keys. Chọn key dùng cho artifact/log → Schedule key deletion. 4. Xoá IAM Role/Policy Vào IAM → Roles, chọn role GitHubActionsPipelineRole → Delete. Vào IAM → Policies, xoá policy custom nếu có. 5. Xoá CloudWatch Log Group Vào CloudWatch → Log groups. Xoá log group /secure-artifact/pipeline hoặc các log khác liên quan. 6. Xoá SNS Topic \u0026amp; EventBridge Rule Vào SNS → Topics, xoá topic secure-artifact-alert. Vào EventBridge → Rules, xoá rule cảnh báo. 7. Xoá CloudTrail \u0026amp; Audit Manager Vào CloudTrail → Trails, xoá trail secure-artifact-trail. Vào Audit Manager → Assessments, xoá assessment secure-artifact-audit. 8. Xoá GitHub Secrets Mở repository trên GitHub. Vào Settings → Secrets and variables → Actions. Xoá các secrets đã thêm cho workshop, ví dụ: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_ROLE_ARN SNYK_TOKEN CODEARTIFACT_REPO_URL 9. Xoá workflow GitHub Actions Mở thư mục .github/workflows trong repository. Xoá file workflow, ví dụ: ci.yml hoặc các file pipeline khác. Commit thay đổi để xoá workflow khỏi repository. "
+},
+{
+	"uri": "/categories/",
+	"title": "Categories",
+	"tags": [],
+	"description": "",
+	"content": ""
+},
+{
+	"uri": "/tags/",
+	"title": "Tags",
+	"tags": [],
+	"description": "",
+	"content": ""
+}]
