@@ -10,7 +10,7 @@ chapter : false
 Trong workshop này, bạn sẽ học cách triển khai hệ thống quản lý artifact an toàn với **AWS CodeArtifact** và tích hợp quy trình quét bảo mật tự động.  
 Quy trình thực hành bao gồm: khởi tạo hạ tầng, cấu hình CI/CD pipeline, bật logging & alerting, kiểm thử và dọn dẹp tài nguyên.
 
-![Architecture Diagram](/images/arc-log.png)
+![Architecture Diagram](/images/AD1.png)
 
 ### Content
 1. [Giới thiệu](1-introduce/)
